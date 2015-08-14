@@ -21,10 +21,12 @@ Usage:
 =============
 
 ```
-reglister.py [-h] [--minsize MINSIZE] [-v]
+usage: reglister.py [-h] [--minsize MINSIZE] [-v]
 
-Recursively scan a Windows registry and print the values with the largest
-data.
+Recursively scan a Windows registry and print keys and values with a large
+data content. Hiding executable files in the registry is a common malware
+technique; as such files tend to be larger than most normal registry data,
+RegLister helps locate potentially suspicious registry data.
 
 optional arguments:
   -h, --help         show this help message and exit
