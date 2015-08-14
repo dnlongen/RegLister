@@ -16,6 +16,13 @@ verbose=args.verbose
 debug=False
 #minsize = 20480 # default to 20 KB
 hives = ["HKEY_CURRENT_USER","HKEY_LOCAL_MACHINE","HKEY_USERS","HKEY_CLASSES_ROOT","HKEY_CURRENT_CONFIG"]
+whitelist = [
+  "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PushNotifications\AppDB",
+  "HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\TrayNotify\IconStreams",
+  "HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\TrayNotify\PastIconsStream",
+  "HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\CurrentVersion\TrayNotify\IconStreams",
+  "HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\CurrentVersion\TrayNotify\PastIconsStream"
+]
 
 def ListValues(path,key):
   if debug: print("ListValues: " + path)
@@ -25,8 +32,9 @@ def ListValues(path,key):
     while 1:
       value = (winreg.EnumValue(key,i))
       if debug: print(path + "\\" + value[0] + " ("+ str(value[1]) + ") " + str(sys.getsizeof(value[1])))
-      if sys.getsizeof(value[1]) > minsize:
-        print(path + "\\" + value[0] + ": " + str(sys.getsizeof(value[1])))
+      if not (path + "\\" + value[0]) in whitelist:
+        if sys.getsizeof(value[1]) > minsize:
+          print(path + "\\" + value[0] + ": " + str(sys.getsizeof(value[1])))
       i += 1
   except WindowsError as e:
     if not (e.errno == 22):
