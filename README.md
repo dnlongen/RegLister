@@ -38,7 +38,7 @@ optional arguments:
 Other Options:
 =============
 
-*whitelist* is a dictionary of legitimate registry values known to contain large data entries; anything in this whitelist will be ignored by RegLister. The default whitelist follows but can be adjusted to suit your needs.
+*whitelist* is a dictionary of legitimate registry values known to contain large data entries; anything in this whitelist will be ignored by RegLister. The default whitelist follows but can be adjusted in the source code to suit your needs.
 
 ```
 whitelist = [
