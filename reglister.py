@@ -4,8 +4,14 @@
 
 import winreg,sys
 
+import argparse
+parser = argparse.ArgumentParser(description='Recursively scan a Windows registry and print the values with the largest data.')
+parser.add_argument('--minsize', default=20, type=int, help='Show all data larger than this; default 20KB')
+args=parser.parse_args()
+minsize=(args.minsize*1024)
+
 debug=False
-minsize = 20480 # default to 20 KB
+#minsize = 20480 # default to 20 KB
 hives = ["HKEY_CURRENT_USER","HKEY_LOCAL_MACHINE","HKEY_USERS","HKEY_CLASSES_ROOT","HKEY_CURRENT_CONFIG"]
 
 def ListValues(path,key):
@@ -43,6 +49,7 @@ def ListKeys(path,key):
     pass
   return
 
-for hive in hives:
-  if debug: print("Processing hive " + hive)
-  ListKeys(hive, winreg.OpenKey(getattr(winreg, hive),""))
+if __name__ == '__main__':
+  for hive in hives:
+    if debug: print("Processing hive " + hive)
+    ListKeys(hive, winreg.OpenKey(getattr(winreg, hive),""))
