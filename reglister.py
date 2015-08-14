@@ -2,10 +2,9 @@
 # Source: https://github.com/dnlongen/RegLister
 # Author: David Longenecker (Twitter: @dnlongen)
 
-import winreg,sys
+import winreg,sys,argparse
 
-import argparse
-parser = argparse.ArgumentParser(description='Recursively scan a Windows registry and print the values with the largest data.')
+parser = argparse.ArgumentParser(description='Recursively scan a Windows registry and print keys and values with a large data content. Hiding executable files in the registry is a common malware technique; as such files tend to be larger than most normal registry data, RegLister helps locate potentially suspicious registry data.')
 parser.add_argument('--minsize', default=20, type=int, help='Show all data larger than this; default 20KB')
 parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Display verbose error messages; this will show errors for registry values to which you do not have access')
 parser.set_defaults(verbose=False)
