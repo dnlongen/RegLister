@@ -10,7 +10,7 @@ Rev 0.1 recursively dives through the registry on an online Windows system, scan
 
 Supported args:
 
-1. --minsize: size, in KB, of the registry data you are interested in. Any value containing data greater in size than this argument will be displayed.
+1. --minsize: size, in KB, of the registry data you are interested in. Any value containing data greater in size than this argument will be displayed. by default, any value containing data greater than 20KB will be shown.
 2. -v, --verbose: Display verbose error messages. By default, "Access denied" and "File not found" errors are suppressed; this will show those messages.
 
 Planned enhancements:
