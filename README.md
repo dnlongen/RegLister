@@ -13,15 +13,15 @@ Rev 0.1 recursively dives through the registry on an online Windows system, scan
 Requirements:
 =============
 
-* Currently written for Python 3
-* As it reads the registry from the current system, it naturally only works on windows :-)
+* Currently written for **Python 3**
+* As it reads the registry from the current system, it naturally only works on Windows :-)
 * requires winreg, argparse, sys
 
 Usage:
 =============
 
 ```
-usage: reglister.py [-h] [--minsize MINSIZE] [-v]
+reglister.py [-h] [--minsize MINSIZE] [-v]
 
 Recursively scan a Windows registry and print keys and values with a large
 data content. Hiding executable files in the registry is a common malware
