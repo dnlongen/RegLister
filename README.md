@@ -10,11 +10,13 @@ Recurse through a registry, identifying values with large data
 
 Registry values with large amounts of data are one way of hiding malicious executable data. The registry is persistent so the malware can remain through a reboot, but the malware is not on disk so is not detected by traditional AV.
 
-See http://www.codereversing.com/blog/archives/261 for an explanation of how this works.
+RegLister recursively dives through the registry on a Windows system. For a live system, RegLister will scanning each of the five hives; if a registry filename is specified, RegLister will scan that specific offline file. By default RegLister will show any data greater than 20kb. You can adjust this by supplying a "--minsize" parameter (in KB) on the command line.
 
-Rev 0.2 recursively dives through the registry on an online Windows system, scanning each of the five hives for any data greater than 20kb by default. You can adjust this by supplying a "--minsize" parameter (in KB) on the command line. It also supports remote registries via the "--computername" parameter.
+RegLister supports remote registries via the "--computername" parameter. It supports offline file analysis via the "--filename" parameter. Naturally these two parameters are mutually exclusive. If neither value is specified, it will scan the local live system.
 
 Note that for remote registry access, the remote PC must have the *Remote Registry* service enabled and running, and must either have its Windows Firewall disabled or set to allow incoming remote registry connections. RegLister does not currently authenticate to the remote registry, thus you must map a drive or a null session with an account with admin rights on the remote PC first.
+
+Hat tip to Patrick Olsen (@patrickrolsen) for example code that helped with parsing offline files.
 
 Requirements:
 =============
@@ -22,12 +24,13 @@ Requirements:
 * Currently written for **Python 3**
 * As it reads the registry from the current system, it naturally only works on Windows :-)
 * requires winreg, argparse, sys
+* For offline file analysis, requires the python-registry module by @willibalenthin, available from https://github.com/williballenthin/python-registry. If this module is not installed, RegLister will still function, but without offline analysis available.
 
 Usage:
 =============
 
 ```
-reglister.py [-h] [-c COMPUTERNAME] [-m MINSIZE] [-v] [-d]
+reglister.py [-h] [-c COMPUTERNAME | -f FILENAME] [-m MINSIZE] [-v] [-d]
 
 Recursively scan a Windows registry and print keys and values with a large
 data content. Hiding executable files in the registry is a common malware
@@ -39,6 +42,10 @@ optional arguments:
   -c COMPUTERNAME, --computername COMPUTERNAME
                         Remote computername to connect; if not specified, the
                         local registry will be used
+  -f FILENAME, --filename FILENAME
+                        Specify a registry hive filename to load for offline
+                        analysis. Note: --computername and --filename are
+                        mutually exclusive
   -m MINSIZE, --minsize MINSIZE
                         Show all data larger than this; default 20KB
   -v, --verbose         Display verbose error messages; this will show errors
@@ -64,5 +71,12 @@ whitelist = [
 Planned enhancements:
 =============
 
-1. Add support for analyzing offline registries
-2. Add a "top n" function to report only the "n" largest data values
+1. Add a "top n" function to report only the "n" largest data values
+2. Add an option to write large data to disk for further analysis
+
+Change Log:
+=============
+
+* v0.3 Added support for offline registry files
+* v0.2 Added support for remote registries
+* v0.1 Original release. Local, offline analysis only.
