@@ -1,4 +1,4 @@
-# RegLister v0.4
+# RegLister v0.3
 # Source: https://github.com/dnlongen/RegLister
 # Author: David Longenecker
 # Author email: david@securityforrealpeople.com 
@@ -6,13 +6,7 @@
 # Explanation: http://securityforrealpeople.com/reglister
 # Hat-tip to @patrickrolsen for example code that helped with parsing offline files
 
-import sys,argparse
-
-try:
-  online=True
-  import winreg
-except:
-  online=False
+import winreg,sys,argparse
 
 try:
   offline=True
@@ -20,7 +14,7 @@ try:
 except:
   offline=False
 
-# Define supported parameters and default values
+# Define suported parameters and defaut values
 parser = argparse.ArgumentParser(description='Recursively scan a Windows registry and print keys and values with a large data content. Hiding executable files in the registry is a common malware technique; as such files tend to be larger than most normal registry data, RegLister helps locate potentially suspicious registry data.')
 parser_ex = parser.add_mutually_exclusive_group(required=False)
 parser_ex.add_argument('-c', '--computername', dest='computername', default='', help='Remote computername to connect; if not specified, the local registry will be used')
@@ -105,44 +99,30 @@ def ListKeys(path,key):
   return
 
 def getOfflineEntries(reg):
-  # getOfflineEntries accepts as input an object of type Registry.Registry, which is itself a registry object 
-  # created from an offline file. It enumerates values in the immediate registry key, then enumerates sukeys 
-  # to which it recurses and repeats the operation. If the data contained in any value is > minsize, getOfflineEntries
-  # will print out the path and the size of the data
   for values in reg.values():
-    try:
-      if values.value_type() in [Registry.RegSZ, Registry.RegExpandSZ]:
-        # RegSZ or RegExpandSZ data type; correct size is len(values.value())
-        binsize=len(values.value())
-        pass
-      elif values.value_type() in [Registry.RegDWord, Registry.RegQWord]:
-        # DWord and QWord are not meaningful for this scan - they are
-        # defined sizes and thus cannot contain large data.
-        continue
-      elif values.value_type() in [Registry.RegBin, Registry.RegNone]:
-        # RegBin or RegNone data type; correct size is len(values.raw_data())
-        binsize=len(values.raw_data())
-        pass
-      elif values.value_type() == Registry.RegMultiSZ:
-        # RegMultiSZ data type; multiple text values.
-        # sys.getsizeof(values.value()) = ??
-        # len(values.raw_data()) = ??
-        # len(values.value()) = number of strings
-        binsize=len(values.raw_data()) # not a precise match for data size, but a starting point
-        pass
-      else:
-        # other data types are currently not supported. Includes:
-        # RegBigEndian, RegFullResourceDescriptor, RegLink, RegResourceList, RegResourceRequirementsList
-        binsize = len(values.raw_data())
-        pass
-      if debug:
+    if values.value_type()==Registry.RegMultiSZ:
+      # python_registry module breaks if value_type is RegMultiSZ; skip it
+      if debug: 
         fullpath = regfile + "->" + reg.path() + "\\" + values.name()
-        print("datatype: " + values.value_type_str())
+        print("Skipping RegMultiSZ value " + fullpath + ": " + str(binsize))
+      continue
+    try:
+      binsize = sys.getsizeof(values.value())
+      if debug: 
+        fullpath = regfile + "->" + reg.path() + "\\" + values.name()
         print(fullpath + ": " + str(binsize))
-        print(values.value())
       if binsize >= minsize:
         fullpath = regfile + "->" + reg.path() + "\\" + values.name()
-        print(fullpath + ": " + str(binsize))
+        if values.value_type() == Registry.RegBin:
+          value = values.value()
+          print(fullpath + ": " + str(binsize))
+#          print(value)
+#          open(values.name(), 'wb').write(value)
+        else:
+          value = values.value()
+          print (fullpath + ": " + str(binsize))
+#          print(value)
+#          open(values.name(), 'w').write(value)
     except TypeError as e:
       if (debug or verbose): print("TypeError handling subkey " + reg.path() + "\\" + values.name())
       pass
@@ -182,30 +162,24 @@ if __name__ == '__main__':
       print("This may be found at https://github.com/williballenthin/python-registry")
       print("Only live registry analysis is available without this module.")
   else:
-    if online:
-      if (debug or verbose): print("Processing live registry")
-      for hive in hives:
-        # Try this with each valid registry hive
-        try:
-          if debug: 
-            if computername: print("Processing hive " + computername + "\\" + hive)
-            else: print("Processing local registry hive " + hive)
-          registry=winreg.ConnectRegistry(r"%s" % computername,getattr(winreg, hive))
-          ListKeys(hive, winreg.OpenKey(registry,""))
-        except OSError as e:
-          if computername: print("Error opening " + computername + "\\" + hive)
-          else: print("Error opening local registry hive " + hive)
-          print("Error code: " + str(e.errno) + " (" + e.strerror + ")")
-          if ((verbose or debug) and (e.errno==2 or e.errno==53)): 
-            print("Perhaps you need to map a null session?")
-            print("Is the remote registry service enabled on " + computername + "?")
-            print("Is Windows firewall enabled on " + computername + "?")
-            sys.exit()
-          if ((verbose or debug) and e.errno==13): 
-            print("Perhaps you need to map a null session?")
-            pass
-    else:
-      #winreg module was not imported, so online analysis is not available
-      print("Live analysis requires the winreg module, which is only present")
-      print("on Windows installations of Python. Only offline analysis of")
-      print("registry files is available without this module.")
+    if (debug or verbose): print("Processing live registry")
+    for hive in hives:
+      # Try this with each valid registry hive
+      try:
+        if debug: 
+          if computername: print("Processing hive " + computername + "\\" + hive)
+          else: print("Processing local registry hive " + hive)
+        registry=winreg.ConnectRegistry(r"%s" % computername,getattr(winreg, hive))
+        ListKeys(hive, winreg.OpenKey(registry,""))
+      except OSError as e:
+        if computername: print("Error opening " + computername + "\\" + hive)
+        else: print("Error opening local registry hive " + hive)
+        print("Error code: " + str(e.errno) + " (" + e.strerror + ")")
+        if ((verbose or debug) and (e.errno==2 or e.errno==53)): 
+          print("Perhaps you need to map a null session?")
+          print("Is the remote registry service enabled on " + computername + "?")
+          print("Is Windows firewall enabled on " + computername + "?")
+          sys.exit()
+        if ((verbose or debug) and e.errno==13): 
+          print("Perhaps you need to map a null session?")
+          pass
