@@ -80,3 +80,9 @@ Change Log:
 * v0.3 Added support for offline registry files
 * v0.2 Added support for remote registries
 * v0.1 Original release. Local, offline analysis only.
+
+Erratta:
+=============
+
+* sys.getsizeof() reports a size approximately 27 to 33 bytes larger than actual size (depending on OS, Python version, and/or python_registry version) for all RegistryValue objects. This is true whether measuring RegistryValue.value() or RegistryValue.raw_data, and whether using sys.getsizeof(RegistryValue.value()) or RegistryValue.value().__sizeof__(). Relative to a scan for large data, it is not a significant difference, but be aware that the actual data is slightly smaller than reported.
+* The python_registry module throws a TypeError attempting to read the value of certain registry keys, in particular many of type RegMultiSZ. At present, RegLister misses some large data values because it errors attempting to read the values.

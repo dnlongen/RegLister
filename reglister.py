@@ -31,7 +31,7 @@ if computername: computername = "\\\\" + computername
 regfile=args.filename
 debug=args.debug
 
-hives = ["HKEY_CURRENT_USER","HKEY_LOCAL_MACHINE","HKEY_USERS","HKEY_CLASSES_ROOT","HKEY_CURRENT_CONFIG"]
+hives = ["HKEY_LOCAL_MACHINE","HKEY_CURRENT_USER","HKEY_USERS","HKEY_CLASSES_ROOT","HKEY_CURRENT_CONFIG"]
 
 # Anything in the whitelist will be ignored, regardless of the size of data content.
 whitelist = [
@@ -56,10 +56,11 @@ def ListValues(path,key):
       if not (path + "\\" + value[0]) in whitelist:
         if sys.getsizeof(value[1]) > minsize:
           print(path + "\\" + value[0] + ": " + str(sys.getsizeof(value[1])))
-          # Hereis where we could writethe contents, or hash and check VT 
+          # Here is where we could write the contents, or hash and check VirusTotal
       i += 1
   except WindowsError as e:
     if not (e.errno == 22):
+      #errno 22 is no more data, i.e. we've read through the entire list. Anything else is unexpected. 
       if (verbose or debug): print("Error opening " + path + "[" + i + "]; " + str(e.errno) + ": " + e.strerror)
     pass
   return
@@ -73,14 +74,23 @@ def ListKeys(path,key):
   subkey = ""
   try:
     while 1:
-      # Infinite loop, aborted upon an error; in other words, loop until we runout of subkeys to examine
+      # Infinite loop, aborted upon an error; in other words, loop until we run out of subkeys to examine
       # Call ListValues first to examine any data values directly contained in this key
       # Then call ListKeys to recurse deeper
       subkey = winreg.EnumKey(key,i)
       if debug: print("subkey: " + subkey)
-      ListValues(path + "\\" + subkey, winreg.OpenKey(key,subkey))
       if debug: print("Calling ListKeys with " + path +"\\" + subkey)
-      ListKeys(path + "\\" + subkey, winreg.OpenKey(key,subkey))
+      try:
+        ListValues(path + "\\" + subkey, winreg.OpenKey(key,subkey))
+      except WindowsError as e:
+        if (verbose or debug): print("Error opening " + path + "\\" + subkey + "; " + str(e.errno) + ": " + e.strerror)
+        pass
+      if debug: print("Calling ListKeys with " + path +"\\" + subkey)
+      try:
+        ListKeys(path + "\\" + subkey, winreg.OpenKey(key,subkey))
+      except WindowsError as e:
+        if (verbose or debug): print("Error opening " + path + "\\" + subkey + "; " + str(e.errno) + ": " + e.strerror)
+        pass
       i += 1
   except WindowsError as e:
     if not (e.errno == 22):
@@ -90,6 +100,12 @@ def ListKeys(path,key):
 
 def getOfflineEntries(reg):
   for values in reg.values():
+    if values.value_type()==Registry.RegMultiSZ:
+      # python_registry module breaks if value_type is RegMultiSZ; skip it
+      if debug: 
+        fullpath = regfile + "->" + reg.path() + "\\" + values.name()
+        print("Skipping RegMultiSZ value " + fullpath + ": " + str(binsize))
+      continue
     try:
       binsize = sys.getsizeof(values.value())
       if debug: 
@@ -98,11 +114,15 @@ def getOfflineEntries(reg):
       if binsize >= minsize:
         fullpath = regfile + "->" + reg.path() + "\\" + values.name()
         if values.value_type() == Registry.RegBin:
-          value = values.value()[:128]
+          value = values.value()
           print(fullpath + ": " + str(binsize))
+#          print(value)
+#          open(values.name(), 'wb').write(value)
         else:
           value = values.value()
           print (fullpath + ": " + str(binsize))
+#          print(value)
+#          open(values.name(), 'w').write(value)
     except TypeError as e:
       if (debug or verbose): print("TypeError handling subkey " + reg.path() + "\\" + values.name())
       pass
@@ -119,8 +139,8 @@ if __name__ == '__main__':
   if debug:
     print("Starting RegLister")
     print("Minsize: " + str(minsize))
-    print("Computername: " + computername)
-    print("Filename: " + regfile)
+    if computername: print("Computername: " + computername)
+    if regfile: print("Filename: " + regfile)
   if regfile:
     if offline:
       if (debug or verbose): print("opening registry file " + regfile)
@@ -144,7 +164,7 @@ if __name__ == '__main__':
   else:
     if (debug or verbose): print("Processing live registry")
     for hive in hives:
-      # Try this which each valid registry hive
+      # Try this with each valid registry hive
       try:
         if debug: 
           if computername: print("Processing hive " + computername + "\\" + hive)
