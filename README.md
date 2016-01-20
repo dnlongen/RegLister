@@ -25,6 +25,7 @@ Requirements:
 * requires argparse, sys
 * Live analysis requires winreg; as it reads the registry from the current system, it naturally only works on Windows :-) If this module is not present, RegLister will still function, but without live analysis available.
 * For offline file analysis, requires the python-registry module by @willibalenthin, available from https://github.com/williballenthin/python-registry. If this module is not installed, RegLister will still function, but without offline analysis available.
+* Tested with Python 3.4.3 and python-registry 1.1.0. Use other versions at your own risk. **RegLister will not run in Python 2.x**
 
 Usage:
 =============
