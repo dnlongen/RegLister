@@ -6,7 +6,7 @@ Recurse through a registry, identifying values with large data
 * Written by David Longenecker
 * Twitter: @dnlongen
 * Email: david (at) securityforrealpeople.com
-* More info: http://www.securityforrealpeople.com/reglister
+* More info: https://www.securityforrealpeople.com/reglister
 
 Registry values with large amounts of data are one way of hiding malicious executable data. The registry is persistent so the malware can remain through a reboot, but the malware is not on disk so is not detected by traditional AV.
 
